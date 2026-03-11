@@ -188,11 +188,11 @@ export const UserForm: React.FC<UserFormProps> = ({
         <div>
           <Label>{tSettings('users.attributes.role')} (*)</Label>
           <div className="w-full mt-1">
-            <Select
-              onValueChange={(value) => {
-                userManager.set('roleId', parseInt(value));
-              }}
-              value={userManager.roleId?.toString() || ''}>
+           <Select
+  onValueChange={(value) => {
+    userManager.set('roleId', value);
+  }}
+  value={userManager.roleId || ''}>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Role..." />
               </SelectTrigger>

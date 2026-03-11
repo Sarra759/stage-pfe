@@ -41,7 +41,8 @@ const baseUserSchema = z.object({
       message: 'User must be at least 13 years old'
     }
   ),
-  roleId: z.number({ message: 'Please select a role' })
+   roleId: z.string().min(1, { message: 'Please select a role' })
+
 });
 
 const createUserSchema = baseUserSchema

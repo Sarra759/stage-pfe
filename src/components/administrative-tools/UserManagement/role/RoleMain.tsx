@@ -32,7 +32,7 @@ export default function RoleMain({ className }: RoleMainProps) {
   //set page title in the breadcrumb
   const { setRoutes } = useBreadcrumb();
   React.useEffect(() => {
-    setRoutes([
+    setRoutes?.([
       { title: tCommon('menu.administrative_tools') },
       { title: tCommon('submenu.user_management') },
       { title: tCommon('settings.user_management.roles') }

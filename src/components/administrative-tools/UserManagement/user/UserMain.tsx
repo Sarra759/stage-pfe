@@ -11,13 +11,12 @@ import { useUserCreateSheet } from './modals/UserCreateSheet';
 import { useUserUpdateSheet } from './modals/UserUpdateSheet';
 import { useActivateUserDialog } from './modals/UserActivateDialog';
 import { useDeactivateUserDialog } from './modals/UserDeactivateDialog';
-import { useBreadcrumb } from '@/context/BreadcrumbContext';
 import { useDebounce } from '@/hooks/other/useDebounce';
-import { CreateUserDto, UpdateUserDto } from '@/types';
 import { updateUserSchema } from '@/types/validations/user.validation';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 
+import { CreateAbstractUserDto, UpdateAbstractUserDto } from '@/types/user';
 interface UserMainProps {
   className?: string;
 }
@@ -28,14 +27,6 @@ export default function UserMain({ className }: UserMainProps) {
   const { t: tCommon } = useTranslation('common');
   const { t: tSettings } = useTranslation('settings');
 
-  const { setRoutes } = useBreadcrumb();
-  React.useEffect(() => {
-    setRoutes?.([
-      { title: tCommon('menu.administrative_tools') },
-      { title: tCommon('submenu.user_management') },
-      { title: tCommon('settings.user_management.users') }
-    ]);
-  }, [router.locale]);
 
   const userManager = useUserManager();
 
@@ -86,7 +77,7 @@ export default function UserMain({ className }: UserMainProps) {
   }, [usersResponse]);
 
   const { mutate: createUser, isPending: isCreationPending } = useMutation({
-    mutationFn: (user: CreateUserDto) => api.user.create(user),
+    mutationFn: (user: CreateAbstractUserDto) => api.user.create(user),
     onSuccess: () => {
       toast('User Created Successfully');
       refetchUsers();
@@ -99,7 +90,7 @@ export default function UserMain({ className }: UserMainProps) {
   });
 
   const { mutate: updateUser, isPending: isUpdatePending } = useMutation({
-    mutationFn: (data: { id?: number; user: UpdateUserDto }) => api.user.update(data.id, data.user),
+    mutationFn: (data: { id?: string; user: UpdateAbstractUserDto }) => api.user.update(data.id, data.user),
     onSuccess: () => {
       toast('User Updated Successfully');
       refetchUsers();
@@ -112,7 +103,7 @@ export default function UserMain({ className }: UserMainProps) {
   });
 
   const { mutate: activateUser, isPending: isActivationPending } = useMutation({
-    mutationFn: (id?: number) => api.user.activate(id),
+mutationFn: (id?: string) => api.user.activate(id),
     onSuccess: () => {
       refetchUsers();
       toast('User Activated Successfully');
@@ -121,7 +112,7 @@ export default function UserMain({ className }: UserMainProps) {
   });
 
   const { mutate: deactivateUser, isPending: isDeactivationPending } = useMutation({
-    mutationFn: (id?: number) => api.user.deactivate(id),
+    mutationFn: (id?: string) => api.user.deactivate(id),
     onSuccess: () => {
       refetchUsers();
       toast('User Deactivated Successfully');
@@ -140,19 +131,27 @@ export default function UserMain({ className }: UserMainProps) {
     });
   };
 
-  const handleCreateSubmit = () => {
-    const data = userManager.getUser();
-    const result = updateUserSchema.safeParse({
-      ...data,
-      dateOfBirth: userManager.dateOfBirth?.toString(),
-      confirmPassword: userManager.confirmPassword
-    });
-    if (!result.success) {
-      handleValidation(result);
-    } else {
-      createUser(data);
-    }
-  };
+const handleCreateSubmit = () => {
+  const data = userManager.getUser();
+
+  console.log("DATA FROM STORE:", data);
+  console.log("ROLE ID:", userManager.roleId);
+
+  const result = updateUserSchema.safeParse({
+    ...data,
+    roleId: userManager.roleId,
+    dateOfBirth: userManager.dateOfBirth?.toISOString(),
+    confirmPassword: userManager.confirmPassword
+  });
+
+  console.log("VALIDATION RESULT:", result);
+
+  if (!result.success) {
+    handleValidation(result);
+  } else {
+    createUser(data as CreateAbstractUserDto);
+  }
+};
 
   const handleUpdateSubmit = () => {
     const { id, ...user } = userManager.getUser();
@@ -164,7 +163,7 @@ export default function UserMain({ className }: UserMainProps) {
     if (!result.success) {
       handleValidation(result);
     } else {
-      updateUser({ id, user });
+      updateUser({ id, user: user as UpdateAbstractUserDto });
     }
   };
 
@@ -182,14 +181,14 @@ export default function UserMain({ className }: UserMainProps) {
 
   const { activateUserDialog, openActivateUserDialog } = useActivateUserDialog({
     userFullname: `${userManager.firstName} - ${userManager.lastName}`,
-    activateUser: () => activateUser(userManager.id),
+    activateUser: () => activateUser(userManager.id as string),
     isActivationPending,
     resetUser: () => userManager.reset()
   });
 
   const { deactivateUserDialog, openDeactivateUserDialog } = useDeactivateUserDialog({
     userFullname: `${userManager.firstName} - ${userManager.lastName}`,
-    deactivateUser: () => deactivateUser(userManager.id),
+    deactivateUser: () => deactivateUser(userManager.id as string),
     isDeactivationPending,
     resetUser: () => userManager.reset()
   });

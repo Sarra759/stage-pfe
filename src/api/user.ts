@@ -38,7 +38,7 @@ const create = async (
   return response.data;
 };
 
-const findById = async (id?: number): Promise<ResponseUserDto> => {
+const findById = async (id?: string): Promise<ResponseUserDto> => {
   const response = await axios.get<ResponseUserDto>(`public/user/${id}`);
   return response.data;
 };
@@ -49,19 +49,19 @@ const findCurrent = async (): Promise<ResponseUserDto> => {
 };
 
 const update = async (
-  id?: number,
+  id?: string,
   updateRoleDto?: UpdateAbstractUserDto
 ): Promise<ResponseUserDto> => {
   const response = await axios.put<ResponseUserDto>(`public/user/${id}`, updateRoleDto);
   return response.data;
 };
 
-const deactivate = async (id?: number): Promise<ResponseUserDto>=> {
+const deactivate = async (id?: string): Promise<ResponseUserDto>=> {
   const response = await axios.put<ResponseUserDto>(`public/user/deactivate/${id}`);
   return response.data;
 };
 
-const activate = async (id?: number): Promise<ResponseUserDto> => {
+const activate = async (id?: string): Promise<ResponseUserDto> => {
   const response = await axios.put<ResponseUserDto>(`public/user/activate/${id}`);
   return response.data;
 };
