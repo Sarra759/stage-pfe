@@ -139,16 +139,23 @@ export default function RoleMain({ className }: RoleMainProps) {
     }
   });
 
-  const handleCreateSubmit = () => {
-    const { permissionsEntries, ...data } = roleManager.getRole();
-    createRole({
-      ...data,
-      permissionsIds: roleManager?.permissions?.map((permission) => permission.id || undefined)
-    });
+
+const handleCreateSubmit = () => {
+  const { permissions, ...data } = roleManager.getRole();
+
+  const payload = {
+    ...data,
+    permissions: roleManager?.permissions?.map((permission) => ({
+      permissionId: permission.id
+    }))
   };
 
+  console.log("CREATE ROLE DATA:", payload);
+  createRole(payload);
+};
+
   const handleUpdateSubmit = () => {
-    const { permissionsEntries, ...data } = roleManager.getRole();
+    const { permissions, ...data } = roleManager.getRole();
     updateRole({
       id: data.id,
       role: {

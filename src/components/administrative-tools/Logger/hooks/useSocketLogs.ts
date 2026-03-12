@@ -36,7 +36,6 @@ const useSocketLogs = () => {
       console.error('Socket connection error:', error);
       toast.error('Erreur de connexion au serveur');
     });
-
     socket.on('disconnect', () => {
       console.log('Disconnected from the WebSocket server');
       hasJoinedRef.current = false;

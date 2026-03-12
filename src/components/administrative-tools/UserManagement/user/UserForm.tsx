@@ -24,7 +24,6 @@ interface UserFormProps {
   forceShowPasswordInputs?: boolean;
   loading?: boolean;
 }
-
 export const UserForm: React.FC<UserFormProps> = ({
   className,
   roles,
