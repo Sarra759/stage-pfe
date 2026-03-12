@@ -109,23 +109,35 @@ export class RoleService {
   }
 
   @Transactional()
-  async saveWithPermissions(createRoleDto: CreateRoleDto): Promise<RoleEntity> {
-    const { permissions, ...rest } = createRoleDto;
-    const existingRole = await this.roleRepository.findOne({
-      where: { label: createRoleDto.label },
-    });
-    if (existingRole) {
-      throw new RoleAlreadyExistsException();
-    }
-    const role = await this.roleRepository.save(rest);
-    await this.rolePermissionService.saveMany(
-      permissions.map((p) => ({
-        roleId: role.id,
-        permissionId: p.permissionId,
-      })),
-    );
-    return role;
+async saveWithPermissions(createRoleDto: CreateRoleDto): Promise<RoleEntity> {
+  const { permissions, permissionsIds, ...rest } = createRoleDto as any;
+
+  const formattedPermissions =
+    permissions ||
+    permissionsIds?.map((id: string) => ({
+      permissionId: id,
+    })) ||
+    [];
+
+  const existingRole = await this.roleRepository.findOne({
+    where: { label: createRoleDto.label },
+  });
+
+  if (existingRole) {
+    throw new RoleAlreadyExistsException();
   }
+
+  const role = await this.roleRepository.save(rest);
+
+  await this.rolePermissionService.saveMany(
+    formattedPermissions.map((p: any) => ({
+      roleId: role.id,
+      permissionId: p.permissionId,
+    })),
+  );
+
+  return role;
+}
 
   @Transactional()
   async saveManyWithPermissions(
@@ -136,12 +148,19 @@ export class RoleService {
     );
   }
 
-  @Transactional()
+   @Transactional()
   async updateWithPermissions(
     id: string,
     updateRoleDto: UpdateRoleDto,
   ): Promise<RoleEntity | null> {
-    const { permissions, ...rest } = updateRoleDto;
+    const { permissions, permissionsIds, ...rest } = updateRoleDto as any;
+
+const formattedPermissions =
+  permissions ||
+  permissionsIds?.map((id: string) => ({
+    permissionId: id,
+  })) ||
+  [];
     const existingRole = await this.roleRepository.findOneById(id);
     if (!existingRole) throw new RoleNotFoundException();
 
@@ -168,8 +187,8 @@ export class RoleService {
       Pick<RolePermissionEntity, 'id' | 'permissionId' | 'roleId'>
     >({
       existingItems: existingPermissions || [],
-      updatedItems: permissions?.map((permission) => ({
-        id: permission.id,
+updatedItems: formattedPermissions.map((permission: any) => ({
+          id: permission.id,
         permissionId: permission.permissionId,
         roleId: updatedRole?.id,
       })),
