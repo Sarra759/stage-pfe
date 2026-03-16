@@ -10,13 +10,14 @@ import { ActivityUpdateDialog } from './dialogs/ActivityUpdateDialog';
 import { useActivityManager } from './hooks/useActivityManager';
 import { ActivityCreateDialog } from './dialogs/ActivityCreateDialog';
 import { Activity } from '@/types';
-import { DataTable } from './data-table/data-table';
-import { ActivityActionsContext } from './data-table/ActionDialogContext';
-import { getActivityColumns } from './data-table/columns';
+
 import { useBreadcrumb } from '@/context/BreadcrumbContext';
 import { useRouter } from 'next/router';
 import ContentSection from '@/components/shared/ContentSection';
 import { cn } from '@/lib/utils';
+import { useActivityColumns } from './columns';
+import { DataTableConfig } from '@/components/shared/data-table/types';
+import { DataTable } from '@/components/shared/data-table/data-table';
 
 interface ActivityMainProps {
   className?: string;
@@ -31,7 +32,7 @@ const ActivityMain: React.FC<ActivityMainProps> = ({ className }) => {
   //set page title in the breadcrumb
   const { setRoutes } = useBreadcrumb();
   React.useEffect(() => {
-    setRoutes([
+    setRoutes?.([
       { title: tCommon('menu.settings') },
       { title: tCommon('submenu.system') },
       { title: tCommon('settings.system.activity') }
@@ -88,23 +89,40 @@ const ActivityMain: React.FC<ActivityMainProps> = ({ className }) => {
     return activitiesResp?.data || [];
   }, [activitiesResp]);
 
-  const context = {
-    //dialogs
-    openCreateDialog: () => setCreateDialog(true),
-    openUpdateDialog: () => setUpdateDialog(true),
-    openDeleteDialog: () => setDeleteDialog(true),
-    //search, filtering, sorting & paging
-    searchTerm,
-    setSearchTerm,
-    page,
-    totalPageCount: activitiesResp?.meta.pageCount || 1,
-    setPage,
-    size,
-    setSize,
-    order: sortDetails.order,
-    sortKey: sortDetails.sortKey,
-    setSortDetails: (order: boolean, sortKey: string) => setSortDetails({ order, sortKey })
-  };
+const context: DataTableConfig<Activity> = {
+  singularName: tSettings('activity.singular'),
+  pluralName: tSettings('activity.plural'),
+
+  createCallback: () => setCreateDialog(true),
+
+  updateCallback: () => setUpdateDialog(true),
+
+  deleteCallback: () => setDeleteDialog(true),
+
+  inspectCallback: () => {},
+
+  additionalActions: {},
+
+  searchTerm,
+  setSearchTerm,
+
+  page,
+  totalPageCount: activitiesResp?.meta.pageCount || 1,
+  setPage,
+
+  size,
+  setSize,
+
+  order: sortDetails.order,
+  sortKey: sortDetails.sortKey,
+
+  setSortDetails: (order: boolean, sortKey: string) =>
+    setSortDetails({ order, sortKey }),
+
+  targetEntity: (activity: Activity) => {
+    activityManager.set('id', activity.id);
+  }
+};
 
   const { mutate: createActivity, isPending: isCreatePending } = useMutation({
     mutationFn: (data: Activity) => api.activity.create(data),
@@ -158,6 +176,8 @@ const ActivityMain: React.FC<ActivityMainProps> = ({ className }) => {
     }
   };
 
+
+  const columns = useActivityColumns(context);
   const isPending =
     isFetchPending ||
     isCreatePending ||
@@ -170,54 +190,21 @@ const ActivityMain: React.FC<ActivityMainProps> = ({ className }) => {
 
   if (error) return 'An error has occurred: ' + error.message;
   return (
-    <ActivityActionsContext.Provider value={context}>
-      <ActivityCreateDialog
-        open={createDialog}
-        isCreatePending={isCreatePending}
-        createActivity={() => {
-          handleActivitySubmit(activityManager.getActivity(), createActivity) &&
-            setCreateDialog(false);
-        }}
-        onClose={() => {
-          setCreateDialog(false);
-        }}
-      />
-      <ActivityUpdateDialog
-        open={updateDialog}
-        updateActivity={() => {
-          handleActivitySubmit(activityManager.getActivity(), updateActivity) &&
-            setUpdateDialog(false);
-        }}
-        isUpdatePending={isUpdatePending}
-        onClose={() => {
-          setUpdateDialog(false);
-        }}
-      />
-      <ActivityDeleteDialog
-        open={deleteDialog}
-        deleteActivity={() => {
-          activityManager?.id && removeActivity(activityManager?.id);
-        }}
-        isDeletionPending={isDeletePending}
-        label={activityManager?.label}
-        onClose={() => {
-          setDeleteDialog(false);
-        }}
-      />
-      <ContentSection
-        title={tSettings('activity.singular')}
-        desc={tSettings('activity.card_description')}
-        className="w-full"
-        childrenClassName={cn('overflow-hidden', className)}>
-        <DataTable
-          className="flex flex-col flex-1 overflow-hidden p-1"
-          containerClassName="overflow-auto"
-          data={activities}
-          columns={getActivityColumns(tSettings)}
-          isPending={isPending}
-        />
-      </ContentSection>
-    </ActivityActionsContext.Provider>
+   <ContentSection
+  title={tSettings('activity.singular')}
+  desc={tSettings('activity.card_description')}
+  className="w-full"
+  childrenClassName={cn('overflow-hidden', className)}
+>
+  <DataTable
+    className="flex flex-col flex-1 overflow-hidden p-1"
+    containerClassName="overflow-auto"
+    data={activities}
+    columns={columns}
+    context={context}
+    isPending={isPending}
+  />
+</ContentSection>
   );
 };
 

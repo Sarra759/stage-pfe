@@ -10,14 +10,14 @@ import { BankAccountCreateDialog } from './dialogs/BankAccountCreateDialog';
 import { BankAccountUpdateDialog } from './dialogs/BankAccountUpdateDialog';
 import { BankAccountDeleteDialog } from './dialogs/BankAccountDeleteDialog';
 import { BankAccountPromoteDialog } from './dialogs/BankAccountPromoteDialog';
-import { getBankAccountColumns } from './data-table/columns';
-import { DataTable } from './data-table/data-table';
-import { api } from '@/api';
-import { BankAccountActionsContext } from './data-table/ActionsContext';
+import { DataTable } from '@/components/shared/data-table/data-table';
+import { getBankAccountColumns } from './columns';
+import { DataTableConfig } from '@/components/shared/data-table/types';
 import ContentSection from '@/components/shared/ContentSection';
 import { cn } from '@/lib/utils';
 import { useBreadcrumb } from '@/context/BreadcrumbContext';
 import { useRouter } from 'next/router';
+import { api } from '@/api';
 
 interface BankAccountMainProps {
   className?: string;
@@ -91,25 +91,36 @@ export const BankAccountMain: React.FC<BankAccountMainProps> = ({ className }) =
     return bankAccountsResp?.data || [];
   }, [bankAccountsResp]);
 
-  const context = {
-    //dialogs
-    openCreateDialog: () => setCreateDialog(true),
-    openUpdateDialog: () => setUpdateDialog(true),
-    openDeleteDialog: () => setDeleteDialog(true),
-    openPromoteDialog: () => setPromoteDialog(true),
-    //search, filtering, sorting & paging
-    searchTerm,
-    setSearchTerm,
-    page,
-    totalPageCount: bankAccountsResp?.meta.pageCount || 1,
-    setPage,
-    size,
-    setSize,
-    order: sortDetails.order,
-    sortKey: sortDetails.sortKey,
-    setSortDetails: (order: boolean, sortKey: string) => setSortDetails({ order, sortKey })
-  };
 
+  const context: DataTableConfig<BankAccount> = {
+  singularName: tSettings('bank_account.singular'),
+  pluralName: tSettings('bank_account.plural'),
+
+  createCallback: () => setCreateDialog(true),
+  updateCallback: () => setUpdateDialog(true),
+  deleteCallback: () => setDeleteDialog(true),
+
+ 
+  searchTerm,
+  setSearchTerm,
+
+  page,
+  totalPageCount: bankAccountsResp?.meta.pageCount || 1,
+  setPage,
+
+  size,
+  setSize,
+
+  order: sortDetails.order,
+  sortKey: sortDetails.sortKey,
+
+  setSortDetails: (order: boolean, sortKey: string) =>
+    setSortDetails({ order, sortKey }),
+
+  targetEntity: (bankAccount: BankAccount) => {
+    bankAccountManager.set('id', bankAccount.id);
+  }
+};
   // determine if there are bank accounts available so we let the client decide to switch its main account
   const [hasToCreateMainByDefault, setHasToCreateMainByDefault] = React.useState<boolean>(false);
   const [hasToUpdateMainByDefault, setHasToUpdateMainByDefault] = React.useState<boolean>(false);
@@ -201,7 +212,7 @@ export const BankAccountMain: React.FC<BankAccountMainProps> = ({ className }) =
       updateBankAccount(bankAccount);
     }
   };
-
+const columns = getBankAccountColumns(context, tSettings, tCurrency);
   const isPending =
     isFetchPending ||
     isCreatePending ||
@@ -214,64 +225,15 @@ export const BankAccountMain: React.FC<BankAccountMainProps> = ({ className }) =
 
   if (error) return 'An error has occurred: ' + error.message;
   return (
-    <BankAccountActionsContext.Provider value={context}>
-      <BankAccountCreateDialog
-        open={createDialog}
-        isCreatePending={isCreatePending}
-        createBankAccount={handleBankAccountCreateSubmit}
-        onClose={() => {
-          setCreateDialog(false);
-          bankAccountManager.reset();
-        }}
-        mainByDefault={hasToCreateMainByDefault}
-      />
-      <BankAccountUpdateDialog
-        open={updateDialog}
-        updateBankAccount={handleBankAccountUpdateSubmit}
-        isUpdatePending={isUpdatePending}
-        onClose={() => {
-          setUpdateDialog(false);
-          bankAccountManager.reset();
-        }}
-      />
-      <BankAccountDeleteDialog
-        open={deleteDialog}
-        deleteBankAccount={() => {
-          bankAccountManager?.id && removeBankAccount(bankAccountManager?.id);
-        }}
-        isDeletionPending={isDeletePending}
-        label={
-          `${bankAccountManager.name}` +
-          (bankAccountManager?.iban ? `(${bankAccountManager?.iban}) ` : ``)
-        }
-        onClose={() => {
-          setDeleteDialog(false);
-        }}
-      />
-      <BankAccountPromoteDialog
-        open={promoteDialog}
-        promoteBankAccount={() => {
-          bankAccountManager?.id && promoteBankAccount(bankAccountManager.getBankAccount());
-        }}
-        isPromotingPending={isPromotionPending}
-        label={bankAccountManager.name}
-        onClose={() => {
-          setPromoteDialog(false);
-        }}
-      />
-      <ContentSection
-        title={tSettings('bank_account.singular')}
-        desc={tSettings('bank_account.card_description')}
-        className="w-full"
-        childrenClassName={cn('overflow-hidden', className)}>
-        <DataTable
-          className="flex flex-col flex-1 overflow-hidden p-1"
-          containerClassName="overflow-auto"
-          data={bankAccounts}
-          columns={getBankAccountColumns(tSettings, tCurrency)}
-          isPending={isPending}
-        />
-      </ContentSection>
-    </BankAccountActionsContext.Provider>
+      <ContentSection title={''} desc={''}>
+    <DataTable
+  className="flex flex-col flex-1 overflow-hidden p-1"
+  containerClassName="overflow-auto"
+  data={bankAccounts}
+  columns={columns}
+  context={context}
+  isPending={isPending}
+/>
+</ContentSection>
   );
 };
