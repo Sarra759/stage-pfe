@@ -17,7 +17,6 @@ export type InvoiceArticleManager = {
   //feature
   removeArticleDescription: () => void;
 };
-
 const calculateForInvoice = (article: ArticleInvoiceEntry) => {
   const quantity = article?.quantity || 0;
   const unit_price = article?.unit_price || 0;

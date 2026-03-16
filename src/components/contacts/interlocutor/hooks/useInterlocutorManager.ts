@@ -19,7 +19,6 @@ type InterlocutorManager = {
   getInterlocutor: () => Partial<Interlocutor>;
   setInterlocutor: (data: Partial<Interlocutor>, firmId?: number) => void;
 };
-
 const initialState: Omit<
   InterlocutorManager,
   'set' | 'reset' | 'getInterlocutor' | 'setInterlocutor'

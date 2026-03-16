@@ -1,7 +1,7 @@
 import React from 'react';
 import { useRouter } from 'next/router';
 import { FirmDetails } from '@/components/contacts/firm/FirmDetails';
-import { PaymentEmbeddedMain } from '@/components/selling/payment/PaymentEmbeddedMain';
+import { PaymentMain } from '@/components/selling/payment/PaymentMain';
 import { useTranslation } from 'react-i18next';
 
 export default function Page() {
@@ -22,7 +22,7 @@ export default function Page() {
 
   return (
     <FirmDetails firmId={id}>
-      <PaymentEmbeddedMain firmId={parseInt(id)} routes={routes} />
+      <PaymentMain firmId={parseInt(id)}  />
     </FirmDetails>
   );
 }

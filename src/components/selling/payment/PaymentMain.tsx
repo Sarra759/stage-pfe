@@ -6,21 +6,21 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { PaymentActionsContext } from './data-table/ActionsContext';
-import { DataTable } from './data-table/data-table';
-import { getPaymentColumns } from './data-table/columns';
+import { DataTable } from '@/components/shared/data-table/data-table';
+import { DataTableConfig } from '@/components/shared/data-table/types';
+import { usePaymentColumns } from './columns';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/errors';
 import { usePaymentManager } from './hooks/usePaymentManager';
 import { PaymentDeleteDialog } from './dialogs/PaymentDeleteDialog';
 import { useIntro } from '@/context/IntroContext';
-
+import { Payment } from '@/types/payment';
 interface PaymentMainProps {
   className?: string;
   firmId?: number;
   interlocutorId?: number;
 }
-
 export const PaymentMain: React.FC<PaymentMainProps> = ({ className, firmId, interlocutorId }) => {
   const router = useRouter();
   const { t: tCommon } = useTranslation('common');
@@ -90,23 +90,44 @@ React.useEffect(() => {
     return paymentsResp?.data || [];
   }, [paymentsResp]);
 
-  const context = {
-    //dialogs
-    openDeleteDialog: () => setDeleteDialog(true),
-    openDownloadDialog: () => setDownloadDialog(true),
-    //search, filtering, sorting & paging
-    searchTerm,
-    setSearchTerm,
-    page,
-    totalPageCount: paymentsResp?.meta.pageCount || 1,
-    setPage,
-    size,
-    setSize,
-    order: sortDetails.order,
-    sortKey: sortDetails.sortKey,
-    setSortDetails: (order: boolean, sortKey: string) => setSortDetails({ order, sortKey })
-  };
+  const context: DataTableConfig<Payment> = {
+  singularName: tInvoicing('payment.singular'),
+  pluralName: tInvoicing('payment.plural'),
 
+inspectCallback: (payment: Payment) => {
+  router.push(`/selling/payment/${payment.id}`);
+},
+  createCallback: () => {},
+
+  updateCallback: () => {},
+
+  deleteCallback: () => {
+    setDeleteDialog(true);
+  },
+
+  additionalActions: {},
+
+  searchTerm,
+  setSearchTerm,
+
+  page,
+  totalPageCount: paymentsResp?.meta.pageCount || 1,
+  setPage,
+
+  size,
+  setSize,
+
+  order: sortDetails.order,
+  sortKey: sortDetails.sortKey,
+
+  setSortDetails: (order: boolean, sortKey: string) =>
+    setSortDetails({ order, sortKey }),
+
+  targetEntity: (payment: Payment) => {
+    paymentManager.set('id', payment.id);
+  }
+};
+const columns = usePaymentColumns(context);
   //Remove Invoice
   const { mutate: removePayment, isPending: isDeletePending } = useMutation({
     mutationFn: (id: number) => api.payment.remove(id),
@@ -123,30 +144,29 @@ React.useEffect(() => {
 
   const isPending = isFetchPending || paging || resizing || searching || sorting;
 
-  return (
-    <>
-      <PaymentDeleteDialog
-        id={paymentManager?.id}
-        open={deleteDialog}
-        deletePayment={() => {
-          paymentManager?.id && removePayment(paymentManager?.id);
-        }}
-        isDeletionPending={isDeletePending}
-        onClose={() => setDeleteDialog(false)}
-      />
-      <PaymentActionsContext.Provider value={context}>
-        <Card className={className}>
-        
-          <CardContent>
-            <DataTable
-              className="my-5"
-              data={payments}
-              columns={getPaymentColumns(tInvoicing, tCurrency)}
-              isPending={isPending}
-            />
-          </CardContent>
-        </Card>
-      </PaymentActionsContext.Provider>
-    </>
-  );
+ return (
+  <div className={cn('flex flex-col flex-1 overflow-hidden container mx-auto', className)}>
+    
+    <PaymentDeleteDialog
+      id={paymentManager?.id}
+      open={deleteDialog}
+      deletePayment={() => {
+        paymentManager?.id && removePayment(paymentManager?.id);
+      }}
+      isDeletionPending={isDeletePending}
+      onClose={() => setDeleteDialog(false)}
+    />
+
+    <DataTable
+      className="flex flex-col flex-1 overflow-auto p-1"
+      containerClassName="overflow-auto"
+      data={payments}
+      columns={columns}
+      context={context}
+      isPending={isPending}
+    />
+
+  </div>
+);
+  
 };
