@@ -12,7 +12,6 @@ import { useMutation } from '@tanstack/react-query';
 import { getErrorMessage } from '@/utils/errors';
 import { useRouter } from 'next/router';
 import { cn } from '@/lib/utils';
-import { useFirmManager } from '@/components/contacts/firm/hooks/useFirmManager';
 import FirmEntrepriseInformation from './form/FirmEntrepriseInformation';
 import FirmContactInformation from './form/FirmContactInformation';
 import FirmAddressInformation from './form/FirmAddressInformation';
@@ -22,6 +21,8 @@ import { AbstractCopyAddressHandler } from './utils/AbstractCopyAddressHandler';
 import { Address, AddressType, CreateFirmDto } from '@/types';
 import { useBreadcrumb } from '@/context/BreadcrumbContext';
 import { Separator } from '@/components/ui/separator';
+import { useFirmStore } from '@/hooks/stores/useFirmStore';
+
 
 interface FirmFormProps {
   className?: string;
@@ -36,7 +37,8 @@ export const FirmCreateForm = ({ className }: FirmFormProps) => {
   const { t: tContact } = useTranslation('contacts');
 
   // Stores
-  const firmManager = useFirmManager();
+   const firmStore = useFirmStore();
+
 
   //set page title in the breadcrumb
   const { setRoutes } = useBreadcrumb();
@@ -73,12 +75,12 @@ export const FirmCreateForm = ({ className }: FirmFormProps) => {
 
   //create handler
   const handleSubmit = () => {
-    const data = firmManager.getFirm() as CreateFirmDto;
+      const data = firmStore.getFirm() as CreateFirmDto;
     const validation = api.firm.validate(data);
     if (validation.message) toast.error(tContact(validation.message));
     else {
       createFirm?.(data);
-      firmManager.reset();
+       firmStore.reset();
     }
   };
 
@@ -87,14 +89,14 @@ export const FirmCreateForm = ({ className }: FirmFormProps) => {
     AbstractCopyAddressHandler(
       tContact,
       prefix,
-      firmManager.invoicingAddress,
-      (a?: Address) => firmManager.set('invoicingAddress', a),
-      firmManager.deliveryAddress,
-      (a?: Address) => firmManager.set('deliveryAddress', a)
+      firmStore.invoicingAddress,
+      (a?: Address) => firmStore.set('invoicingAddress', a),
+      firmStore.deliveryAddress,
+      (a?: Address) => firmStore.set('deliveryAddress', a)
     );
 
   const globalReset = () => {
-    firmManager.reset();
+    firmStore.reset();
   };
 
   React.useEffect(() => {
@@ -134,10 +136,10 @@ export const FirmCreateForm = ({ className }: FirmFormProps) => {
           />
 
           <FirmAddressInformation
-            address={firmManager.invoicingAddress}
+address={firmStore.invoicingAddress}
             setAddressField={(fieldName: string, value: any) => {
-              firmManager.set('invoicingAddress', {
-                ...firmManager.invoicingAddress,
+              firmStore.set('invoicingAddress', {
+                ...firmStore.invoicingAddress,
                 [fieldName]: value
               });
             }}
@@ -148,10 +150,10 @@ export const FirmCreateForm = ({ className }: FirmFormProps) => {
             handleCopyAddress={() => handleAddressCopy('invoicingAddress')}
           />
           <FirmAddressInformation
-            address={firmManager.deliveryAddress}
+            address={firmStore.deliveryAddress}
             setAddressField={(fieldName: string, value: any) => {
-              firmManager.set('deliveryAddress', {
-                ...firmManager.deliveryAddress,
+              firmStore.set('deliveryAddress', {
+                ...firmStore.deliveryAddress,
                 [fieldName]: value
               });
             }}

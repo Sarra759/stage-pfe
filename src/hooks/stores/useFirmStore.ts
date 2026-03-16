@@ -1,9 +1,9 @@
 import { api } from '@/api';
 import { Activity, Address, Currency, Firm, PaymentCondition, SOCIAL_TITLE } from '@/types';
 import _ from 'lodash';
-import { create } from 'zustand';
+import  create  from 'zustand';
 
-type FirmManager = {
+interface FirmData  {
   //snapshot
   snapshot?: Firm;
   changed?: boolean;
@@ -26,39 +26,19 @@ type FirmManager = {
   notes?: string;
   invoicingAddress?: Address;
   deliveryAddress?: Address;
+
+  }
+
+export interface FirmStore extends FirmData {
+  set: (name: keyof FirmData, value: any) => void;
   // methods
-  set: (name: keyof FirmManager, value: any) => void;
   setFirm: (firm: Firm) => void;
   reset: () => void;
   getFirm: () => Firm;
-};
 
-const getNormalizedFirm = (data: any) => {
-  return {
-    id: data.id,
-    name: data.enterpriseName,
-    mainInterlocutor: {
-      title: data?.title,
-      name: data?.name,
-      surname: data?.surname,
-      phone: data?.phone,
-      email: data?.email,
-      position: data?.position
-    },
-    activityId: data?.activity?.id,
-    currencyId: data?.currency?.id,
-    paymentConditionId: data?.paymentCondition?.id,
-    isPerson: data?.isPerson,
-    website: data?.website,
-    phone: data?.entreprisePhone,
-    ...(data?.isPerson ? {} : { taxIdNumber: data?.taxIdNumber }),
-    notes: data?.notes,
-    invoicingAddress: data?.invoicingAddress,
-    deliveryAddress: data?.deliveryAddress
-  } as Firm;
-};
+}
 
-const initialState: Omit<FirmManager, 'set' | 'setFirm' | 'reset' | 'getFirm' | 'hasChanged'> = {
+const initialState: FirmData = {
   id: undefined,
   title: SOCIAL_TITLE.MR,
   name: '',
@@ -81,9 +61,8 @@ const initialState: Omit<FirmManager, 'set' | 'setFirm' | 'reset' | 'getFirm' | 
   changed: false
 };
 
-export const useFirmManager = create<FirmManager>((set, get) => ({
-  ...initialState,
-  set: (name: keyof FirmManager, value: any) => {
+export const useFirmStore = create<FirmStore>((set, get) => ({  ...initialState,
+  set: (name: keyof FirmData, value: any) => {
     set((state) => {
       const newState = {
         ...state,
@@ -131,3 +110,28 @@ export const useFirmManager = create<FirmManager>((set, get) => ({
     }));
   }
 }));
+
+const getNormalizedFirm = (data: any) => {
+  return {
+    id: data.id,
+    name: data.enterpriseName,
+    mainInterlocutor: {
+      title: data?.title,
+      name: data?.name,
+      surname: data?.surname,
+      phone: data?.phone,
+      email: data?.email,
+      position: data?.position
+    },
+    activityId: data?.activity?.id,
+    currencyId: data?.currency?.id,
+    paymentConditionId: data?.paymentCondition?.id,
+    isPerson: data?.isPerson,
+    website: data?.website,
+    phone: data?.entreprisePhone,
+    ...(data?.isPerson ? {} : { taxIdNumber: data?.taxIdNumber }),
+    notes: data?.notes,
+    invoicingAddress: data?.invoicingAddress,
+    deliveryAddress: data?.deliveryAddress
+  } as Firm;
+};

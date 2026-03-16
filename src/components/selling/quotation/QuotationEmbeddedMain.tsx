@@ -40,7 +40,7 @@ export const QuotationEmbeddedMain: React.FC<QuotationEmbeddedMainProps> = ({
   const { setRoutes } = useBreadcrumb();
   React.useEffect(() => {
     if (routes && (firmId || interlocutorId))
-      setRoutes([...routes, { title: tCommon('submenu.quotations') }]);
+      setRoutes?.([...routes, { title: tCommon('submenu.quotations') }]);
   }, [router.locale, firmId, interlocutorId, routes]);
 
   const quotationManager = useQuotationManager();

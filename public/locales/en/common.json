@@ -93,6 +93,12 @@
     "validate": "Validate",
     "unassociate": "Unassociate"
   },
+
+  "datatable": {
+    "paginationPhrase": "Showing Page {{page}} of {{total}}",
+    "search": "Search {{entity}}...",
+    "noResults": "No results"
+  },
   "elements": "Elements",
   "files": {
     "uploading": "Uploading",

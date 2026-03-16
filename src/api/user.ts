@@ -48,6 +48,7 @@ const findCurrent = async (): Promise<ResponseUserDto> => {
   return response.data;
 };
 
+
 const update = async (
   id?: string,
   updateRoleDto?: UpdateAbstractUserDto

@@ -11,7 +11,6 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { getErrorMessage } from '@/utils/errors';
 import { useRouter } from 'next/router';
 import { cn } from '@/lib/utils';
-import { useFirmManager } from '@/components/contacts/firm/hooks/useFirmManager';
 import FirmContactInformation from './form/FirmContactInformation';
 import FirmEntrepriseInformation from './form/FirmEntrepriseInformation';
 import FirmAddressInformation from './form/FirmAddressInformation';
@@ -23,7 +22,7 @@ import { useDebounce } from '@/hooks/other/useDebounce';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/shared';
-
+import { useFirmStore } from '@/hooks/stores/useFirmStore';
 interface FirmFormProps {
   className?: string;
   firmId?: number;
@@ -38,7 +37,7 @@ export const FirmUpdateForm = ({ className, firmId }: FirmFormProps) => {
   const { t: tContact } = useTranslation('contacts');
 
   //stores
-  const firmManager = useFirmManager();
+ const firmStore = useFirmStore();
 
   //Fetch options
   const {
@@ -58,7 +57,7 @@ export const FirmUpdateForm = ({ className, firmId }: FirmFormProps) => {
   const { setRoutes } = useBreadcrumb();
   React.useEffect(() => {
     if (firmId)
-      setRoutes([
+      setRoutes?.([
         { title: tCommon('menu.contacts'), href: '/contacts' },
         { title: tContact('firm.plural'), href: '/contacts/firms' },
         {
@@ -82,8 +81,8 @@ export const FirmUpdateForm = ({ className, firmId }: FirmFormProps) => {
   const { value: debounceFetching } = useDebounce<boolean>(fetching, 500);
 
   const globalReset = () => {
-    firmManager.reset();
-    firm && firmManager.setFirm(firm);
+    firmStore.reset();
+    firm && firmStore.setFirm(firm);
   };
   React.useEffect(globalReset, [firm]);
 
@@ -107,7 +106,7 @@ export const FirmUpdateForm = ({ className, firmId }: FirmFormProps) => {
 
   //update handler
   const onSubmit = () => {
-    const data = firmManager.getFirm() as UpdateFirmDto;
+    const data = firmStore.getFirm() as UpdateFirmDto;
     const validation = api.firm.validate(data);
     if (validation.message) toast.error(validation.message);
     else {
@@ -121,10 +120,10 @@ export const FirmUpdateForm = ({ className, firmId }: FirmFormProps) => {
     AbstractCopyAddressHandler(
       tContact,
       prefix,
-      firmManager.invoicingAddress,
-      (a?: Address) => firmManager.set('invoicingAddress', a),
-      firmManager.deliveryAddress,
-      (a?: Address) => firmManager.set('deliveryAddress', a)
+      firmStore.invoicingAddress,
+      (a?: Address) => firmStore.set('invoicingAddress', a),
+      firmStore.deliveryAddress,
+      (a?: Address) => firmStore.set('deliveryAddress', a)
     );
 
   //component representation
@@ -162,10 +161,10 @@ export const FirmUpdateForm = ({ className, firmId }: FirmFormProps) => {
           />
 
           <FirmAddressInformation
-            address={firmManager.invoicingAddress}
+            address={firmStore.invoicingAddress}
             setAddressField={(fieldName: string, value: any) => {
-              firmManager.set('invoicingAddress', {
-                ...firmManager.invoicingAddress,
+              firmStore.set('invoicingAddress', {
+                ...firmStore.invoicingAddress,
                 [fieldName]: value
               });
             }}
@@ -177,10 +176,10 @@ export const FirmUpdateForm = ({ className, firmId }: FirmFormProps) => {
             loading={debounceFetching}
           />
           <FirmAddressInformation
-            address={firmManager.deliveryAddress}
+            address={firmStore.deliveryAddress}
             setAddressField={(fieldName: string, value: any) => {
-              firmManager.set('deliveryAddress', {
-                ...firmManager.deliveryAddress,
+              firmStore.set('deliveryAddress', {
+                ...firmStore.deliveryAddress,
                 [fieldName]: value
               });
             }}

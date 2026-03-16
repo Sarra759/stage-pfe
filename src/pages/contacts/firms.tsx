@@ -1,5 +1,5 @@
 import React from 'react';
-import { FirmMain } from '@/components/contacts/firm/FirmMain';
+import { FirmMain } from '@/components/contacts/firm/FirmPortal';
 
 export default function Page() {
   return (
