@@ -117,9 +117,15 @@ export const BankAccountMain: React.FC<BankAccountMainProps> = ({ className }) =
   setSortDetails: (order: boolean, sortKey: string) =>
     setSortDetails({ order, sortKey }),
 
-  targetEntity: (bankAccount: BankAccount) => {
-    bankAccountManager.set('id', bankAccount.id);
-  }
+ targetEntity: (bankAccount: BankAccount) => {
+  bankAccountManager.set('id', bankAccount.id);
+  bankAccountManager.set('name', bankAccount.name);
+  bankAccountManager.set('bic', bankAccount.bic);
+  bankAccountManager.set('rib', bankAccount.rib);
+  bankAccountManager.set('iban', bankAccount.iban);
+  bankAccountManager.set('currency', bankAccount.currency);
+  bankAccountManager.set('isMain', bankAccount.isMain);
+}
 };
   // determine if there are bank accounts available so we let the client decide to switch its main account
   const [hasToCreateMainByDefault, setHasToCreateMainByDefault] = React.useState<boolean>(false);
@@ -224,16 +230,51 @@ const columns = getBankAccountColumns(context, tSettings, tCurrency);
     sorting;
 
   if (error) return 'An error has occurred: ' + error.message;
-  return (
-      <ContentSection title={''} desc={''}>
+ return (
+  <ContentSection title={''} desc={''}>
+  <div>
     <DataTable
-  className="flex flex-col flex-1 overflow-hidden p-1"
-  containerClassName="overflow-auto"
-  data={bankAccounts}
-  columns={columns}
-  context={context}
-  isPending={isPending}
+      className="flex flex-col flex-1 overflow-hidden p-1"
+      containerClassName="overflow-auto"
+      data={bankAccounts}
+      columns={columns}
+      context={context}
+      isPending={isPending}
+    />
+
+    <BankAccountCreateDialog
+  open={createDialog}
+  createBankAccount={handleBankAccountCreateSubmit}
+  isCreatePending={isCreatePending}
+  onClose={() => setCreateDialog(false)}
+  mainByDefault={hasToCreateMainByDefault}
 />
+
+   <BankAccountUpdateDialog
+  open={updateDialog}
+  updateBankAccount={handleBankAccountUpdateSubmit}
+  isUpdatePending={isUpdatePending}
+  onClose={() => setUpdateDialog(false)}
+/>
+
+  <BankAccountDeleteDialog
+  open={deleteDialog}
+  deleteBankAccount={() =>
+    removeBankAccount(bankAccountManager.getBankAccount().id!)
+  }
+  isDeletionPending={isDeletePending}
+  onClose={() => setDeleteDialog(false)}
+/>
+   <BankAccountPromoteDialog
+  open={promoteDialog}
+  promoteBankAccount={() =>
+    promoteBankAccount(bankAccountManager.getBankAccount())
+  }
+  isPromotingPending={isPromotionPending}
+  onClose={() => setPromoteDialog(false)}
+/>
+  </div>
 </ContentSection>
+
   );
 };
