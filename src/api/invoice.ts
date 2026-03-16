@@ -13,8 +13,7 @@ import {
   PagedInvoice,
   ResponseInvoiceRangeDto,
   ToastValidation,
-  UpdateInvoiceDto,
-  UpdateInvoiceSequentialNumber
+  UpdateInvoiceDto
 } from '@/types';
 import { INVOICE_FILTER_ATTRIBUTES } from '@/constants/invoice.filter-attributes';
 
@@ -216,7 +215,8 @@ const validate = (invoice: Partial<Invoice>, dateRange?: DateRange): ToastValida
   return { message: '' };
 };
 
-const updateInvoicesSequentials = async (updatedSequenceDto: UpdateInvoiceSequentialNumber) => {
+const updateInvoicesSequentials = async (updatedSequenceDto:   UpdateInvoiceDto
+) => {
   const response = await axios.put<Invoice>(
     `/public/invoice/update-invoice-sequences`,
     updatedSequenceDto

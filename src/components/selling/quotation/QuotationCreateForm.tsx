@@ -94,16 +94,20 @@ export const QuotationCreateForm = ({ className, firmId }: QuotationFormProps) =
 
   //websocket to listen for server changes related to sequence number
   const { currentSequence, isSequencePending } = useQuotationSocket();
+  console.log("Sequence:", currentSequence);
   //handle Sequential Number
   React.useEffect(() => {
+  if (currentSequence) {
     quotationManager.set('sequentialNumber', currentSequence);
-    quotationManager.set(
-      'bankAccount',
-      bankAccounts.find((a) => a.isMain)
-    );
-    quotationManager.set('currency', cabinet?.currency);
-  }, [currentSequence]);
+  }
 
+  quotationManager.set(
+    'bankAccount',
+    bankAccounts.find((a) => a.isMain)
+  );
+
+  quotationManager.set('currency', cabinet?.currency);
+}, [currentSequence]);
   // perform calculations when the financialy Information are changed
   const digitAfterComma = React.useMemo(() => {
     return quotationManager.currency?.digitAfterComma || 3;
@@ -171,15 +175,17 @@ export const QuotationCreateForm = ({ className, firmId }: QuotationFormProps) =
       toast.error(message);
     }
   });
-  const loading =
-    isFetchFirmsPending ||
-    isFetchTaxesPending ||
-    isFetchCabinetPending ||
-    isFetchBankAccountsPending ||
-    isFetchCurrenciesPending ||
-    isFetchDefaultConditionPending ||
-      isSequencePending;;
-  !commonReady || !invoicingReady || isCreatePending;
+const loading =
+  isFetchFirmsPending ||
+  isFetchTaxesPending ||
+  isFetchCabinetPending ||
+  isFetchBankAccountsPending ||
+  isFetchCurrenciesPending ||
+  isFetchDefaultConditionPending ||
+  isSequencePending ||
+  !commonReady ||
+  !invoicingReady ||
+  isCreatePending;
   const { value: debounceLoading } = useDebounce<boolean>(loading, 500);
 
   //Reset Form
@@ -196,7 +202,26 @@ export const QuotationCreateForm = ({ className, firmId }: QuotationFormProps) =
 
   //create handler
   const onSubmit = (status: QUOTATION_STATUS) => {
-    const articlesDto: ArticleQuotationEntry[] = articleManager.getArticles()?.map((article) => ({
+
+  // 🔍 vérifier les champs obligatoires
+  if (!quotationManager?.firm?.id) {
+    toast.error("Please select a firm");
+    return;
+  }
+
+  if (!quotationManager?.interlocutor?.id) {
+    toast.error("Please select an interlocutor");
+    return;
+  }
+
+  if (!quotationManager?.currency?.id) {
+    toast.error("Please select a currency");
+    return;
+  }
+
+  console.log("QuotationManager:", quotationManager);
+
+  const articlesDto: ArticleQuotationEntry[] = articleManager.getArticles()?.map((article) => ({
       id: article?.id,
       article: {
         title: article?.article?.title,

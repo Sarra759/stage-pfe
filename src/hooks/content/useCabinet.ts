@@ -17,7 +17,6 @@ const useCabinet = (enabled: boolean = true) => {
     queryFn: () => api.cabinet.findOne(parseInt(TEST_CABINET || '0'), 'indeed'),
     enabled
   });
-
   const cabinet = React.useMemo(() => {
     if (!cabinetResp) return null;
     return cabinetResp;

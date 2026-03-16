@@ -12,8 +12,8 @@ import {
   Quotation,
   QuotationUploadedFile,
   ToastValidation,
+  UpdateInvoiceDto,
   UpdateQuotationDto,
-  UpdateQuotationSequentialNumber
 } from '@/types';
 import { QUOTATION_FILTER_ATTRIBUTES } from '@/constants/quotation.filter-attributes';
 
@@ -202,7 +202,7 @@ const validate = (quotation: Partial<Quotation>): ToastValidation => {
   return { message: '' };
 };
 
-const updateQuotationsSequentials = async (updatedSequenceDto: UpdateQuotationSequentialNumber) => {
+const updateQuotationsSequentials = async (updatedSequenceDto:   UpdateInvoiceDto) => {
   const response = await axios.put<Quotation>(
     `/public/quotation/update-quotation-sequences`,
     updatedSequenceDto
