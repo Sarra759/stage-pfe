@@ -1,6 +1,6 @@
 import React from 'react';
 import { api } from '@/api';
-import { CreateInterlocutorDto, UpdateInterlocutorDto } from '@/types';
+import { CreateInterlocutorDto, Interlocutor, UpdateInterlocutorDto } from '@/types';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
 import { useRouter } from 'next/router';
@@ -9,9 +9,8 @@ import { getErrorMessage } from '@/utils/errors';
 import { useDebounce } from '@/hooks/other/useDebounce';
 import { useTranslation } from 'react-i18next';
 import { useInterlocutorDeleteDialog } from './modals/InterlocutorDeleteDialog';
-import { InterlocutorActionsContext } from './data-table/ActionsContext';
-import { DataTable } from './data-table/data-table';
-import { getInterlocutorColumns } from './data-table/columns';
+import { DataTable } from '@/components/shared/data-table/data-table';
+import { DataTableConfig } from '@/components/shared/data-table/types';
 import { useInterlocutorManager } from './hooks/useInterlocutorManager';
 import { useBreadcrumb } from '@/context/BreadcrumbContext';
 import { useInterlocutorCreateOrAssociateSheet } from './modals/InterlocutorCreateOrAssociateSheet';
@@ -20,6 +19,9 @@ import { useInterlocutorPromoteDialog } from './modals/InterlocutorPromoteDialog
 import { useInterlocutorDisassociateDialog } from './modals/InterlocutorDisassociateDialog';
 import { useIntro } from '@/context/IntroContext';
 
+import { useInterlocutorColumns } from './columns';
+
+import { cn } from '@/lib/utils';
 interface InterlocutorProps {
   className?: string;
   firmId?: number;
@@ -260,27 +262,50 @@ React.useEffect(() => {
       isDisassociatePending
     );
 
-  const context = {
-    //dialogs
-    openCreateDialog: () => openCreateInterlocutorSheet(),
-    openUpdateDialog: () => openUpdateInterlocutorSheet(),
-    openDeleteDialog: () => openDeleteInterlocutorDialog(),
-    openPromoteDialog: () => openPromoteInterlocutorDialog(),
-    openDisassociateDialog: () => openDisassociateInterlocutorDialog(),
-    //search, filtering, sorting & paging
-    searchTerm,
-    setSearchTerm,
-    page,
-    totalPageCount: interlocutorsResp?.meta.pageCount || 1,
-    setPage,
-    size,
-    setSize,
-    order: sortDetails.order,
-    sortKey: sortDetails.sortKey,
-    setSortDetails: (order: boolean, sortKey: string) => setSortDetails({ order, sortKey }),
-    context: { firmId }
-  };
 
+
+    const context: DataTableConfig<Interlocutor> = {
+  singularName: tContacts('interlocutor.singular'),
+  pluralName: tContacts('interlocutor.plural'),
+
+  inspectCallback: () => {},
+
+  createCallback: () => {
+    openCreateInterlocutorSheet();
+  },
+
+  updateCallback: () => {
+    openUpdateInterlocutorSheet();
+  },
+
+  deleteCallback: () => {
+    openDeleteInterlocutorDialog();
+  },
+
+  additionalActions: {},
+
+  searchTerm,
+  setSearchTerm,
+
+  page,
+  totalPageCount: interlocutorsResp?.meta.pageCount || 1,
+  setPage,
+
+  size,
+  setSize,
+
+  order: sortDetails.order,
+  sortKey: sortDetails.sortKey,
+
+  setSortDetails: (order: boolean, sortKey: string) =>
+    setSortDetails({ order, sortKey }),
+
+  targetEntity: (interlocutor: Interlocutor) => {
+    interlocutorManager.set('id', interlocutor.id);
+  }
+};
+  
+const columns = useInterlocutorColumns(context);
   const isPending =
     isFetchPending ||
     isAssociatePending ||
@@ -293,27 +318,22 @@ React.useEffect(() => {
     sorting;
 
   if (error) return 'An error has occurred: ' + error.message;
-  return (
-    <InterlocutorActionsContext.Provider value={context}>
-      {createInterlocutorSheet}
-      {updateInterlocutorSheet}
-      {deleteInterlocutorDialog}
-      {promoteInterlocutorDialog}
-      {disassociateInterlocutorDialog}
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle></CardTitle>
-          <CardDescription></CardDescription>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            className="my-5"
-            data={interlocutors}
-            columns={getInterlocutorColumns(tContacts, tCommon, firmId ? { firmId } : undefined)}
-            isPending={isPending}
-          />
-        </CardContent>
-      </Card>
-    </InterlocutorActionsContext.Provider>
-  );
+ return (
+  <div className={cn('flex flex-col flex-1 overflow-hidden container mx-auto', className)}>
+    {createInterlocutorSheet}
+    {updateInterlocutorSheet}
+    {deleteInterlocutorDialog}
+    {promoteInterlocutorDialog}
+    {disassociateInterlocutorDialog}
+
+    <DataTable
+      className="flex flex-col flex-1 overflow-auto p-1"
+      containerClassName="overflow-auto"
+      data={interlocutors}
+      columns={columns}
+      context={context}
+      isPending={isPending}
+    />
+  </div>
+);
 };
