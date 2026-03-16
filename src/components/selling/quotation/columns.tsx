@@ -1,29 +1,30 @@
 import { Quotation } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { ColumnDef } from '@tanstack/react-table';
-import { DataTableRowActions } from './data-table-row-actions';
-import { DataTableColumnHeader } from './data-table-column-header';
+import { DataTableRowActions } from '@/components/shared/data-table/data-table-row-actions';
+import { DataTableColumnHeader } from '@/components/shared/data-table/data-table-column-header';
+import { DataTableConfig } from '@/components/shared/data-table/types';
 import { transformDate, transformDateTime } from '@/utils/date.utils';
-import { NextRouter } from 'next/router';
 import { QUOTATION_FILTER_ATTRIBUTES } from '@/constants/quotation.filter-attributes';
-import { firm } from '@/api';
+import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/router';
 
-export const getQuotationColumns = (
-  t: Function,
-  router: NextRouter,
+export const useQuotationColumns = (
+  context: DataTableConfig<Quotation>,
   firmId?: number,
   interlocutorId?: number
 ): ColumnDef<Quotation>[] => {
-  const translationNamespace = 'invoicing';
-  const translate = (value: string, namespace: string = '') => {
-    return t(value, { ns: namespace || translationNamespace });
-  };
+
+  const { t } = useTranslation('invoicing');
+  const router = useRouter();
+
   const firmColumn: ColumnDef<Quotation> = {
     accessorKey: 'firm',
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title={translate('quotation.attributes.firm')}
+        context={context}
+        title={t('quotation.attributes.firm')}
         attribute={QUOTATION_FILTER_ATTRIBUTES.FIRM}
       />
     ),
@@ -43,7 +44,8 @@ export const getQuotationColumns = (
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title={translate('quotation.attributes.interlocutor')}
+        context={context}
+        title={t('quotation.attributes.interlocutor')}
         attribute={QUOTATION_FILTER_ATTRIBUTES.INTERLOCUTOR}
       />
     ),
@@ -64,7 +66,8 @@ export const getQuotationColumns = (
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title={translate('quotation.attributes.number')}
+          context={context}
+          title={t('quotation.attributes.number')}
           attribute={QUOTATION_FILTER_ATTRIBUTES.SEQUENTIAL}
         />
       ),
@@ -77,17 +80,16 @@ export const getQuotationColumns = (
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title={translate('quotation.attributes.date')}
+          context={context}
+          title={t('quotation.attributes.date')}
           attribute={QUOTATION_FILTER_ATTRIBUTES.DATE}
         />
       ),
       cell: ({ row }) => (
         <div>
-          {row.original.date ? (
-            transformDate(row.original.date)
-          ) : (
-            <span>{t('quotation.attributes.no_date')}</span>
-          )}
+          {row.original.date
+            ? transformDate(row.original.date)
+            : <span>{t('quotation.attributes.no_date')}</span>}
         </div>
       ),
       enableSorting: true,
@@ -98,17 +100,16 @@ export const getQuotationColumns = (
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title={translate('quotation.attributes.due_date')}
+          context={context}
+          title={t('quotation.attributes.due_date')}
           attribute={QUOTATION_FILTER_ATTRIBUTES.DUEDATE}
         />
       ),
       cell: ({ row }) => (
         <div>
-          {row.original.dueDate ? (
-            transformDate(row.original.dueDate)
-          ) : (
-            <span>{t('quotation.attributes.no_due_date')}</span>
-          )}
+          {row.original.dueDate
+            ? transformDate(row.original.dueDate)
+            : <span>{t('quotation.attributes.no_due_date')}</span>}
         </div>
       ),
       enableSorting: true,
@@ -119,14 +120,13 @@ export const getQuotationColumns = (
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title={translate('quotation.attributes.status')}
+          context={context}
+          title={t('quotation.attributes.status')}
           attribute={QUOTATION_FILTER_ATTRIBUTES.STATUS}
         />
       ),
       cell: ({ row }) => (
-        <div>
-          <Badge className="px-4 py-1">{t(row.original?.status || '')}</Badge>
-        </div>
+        <Badge className="px-4 py-1">{t(row.original?.status || '')}</Badge>
       ),
       enableSorting: true,
       enableHiding: true
@@ -136,7 +136,8 @@ export const getQuotationColumns = (
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title={translate('quotation.attributes.total')}
+          context={context}
+          title={t('quotation.attributes.total')}
           attribute={QUOTATION_FILTER_ATTRIBUTES.TOTAL}
         />
       ),
@@ -154,11 +155,14 @@ export const getQuotationColumns = (
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title={translate('quotation.attributes.created_at')}
+          context={context}
+          title={t('quotation.attributes.created_at')}
           attribute={QUOTATION_FILTER_ATTRIBUTES.CREATEDAT}
         />
       ),
-      cell: ({ row }) => <div>{transformDateTime(row.original?.createdAt || '')}</div>,
+      cell: ({ row }) => (
+        <div>{transformDateTime(row.original?.createdAt || '')}</div>
+      ),
       enableSorting: true,
       enableHiding: true
     },
@@ -166,12 +170,14 @@ export const getQuotationColumns = (
       id: 'actions',
       cell: ({ row }) => (
         <div className="flex justify-end">
-          <DataTableRowActions row={row} />
+          <DataTableRowActions row={row} context={context} />
         </div>
       )
     }
   ];
+
   if (!firmId) columns.splice(2, 0, firmColumn);
   if (!interlocutorId) columns.splice(3, 0, interlocutorColumn);
+
   return columns;
 };

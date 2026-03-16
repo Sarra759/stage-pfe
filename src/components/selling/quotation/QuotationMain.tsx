@@ -9,7 +9,7 @@ import { QuotationDuplicateDialog } from './dialogs/QuotationDuplicateDialog';
 import { useTranslation } from 'react-i18next';
 import { QuotationDeleteDialog } from './dialogs/QuotationDeleteDialog';
 import { QuotationDownloadDialog } from './dialogs/QuotationDownloadDialog';
-import { getQuotationColumns } from './data-table/columns';
+import { useQuotationColumns } from './columns';
 import { useQuotationManager } from './hooks/useQuotationManager';
 import { useBreadcrumb } from '@/context/BreadcrumbContext';
 import { DuplicateQuotationDto, Quotation } from '@/types';
@@ -87,33 +87,45 @@ export const QuotationMain: React.FC<QuotationMainProps> = ({ className }) => {
     return quotationsResp?.data || [];
   }, [quotationsResp]);
 
-  const context: DataTableConfig<Quotation> = {
-    singularName: tInvoicing('quotation.singular'),
-    pluralName: tInvoicing('quotation.plural'),
+ const context: DataTableConfig<Quotation> = {
+  singularName: tInvoicing('quotation.singular'),
+  pluralName: tInvoicing('quotation.plural'),
 
-    //dialogs
-    createCallback: () => {
-      router.push('/selling/new-quotation');
-    },
-    updateCallback: () => {},
-    deleteCallback: () => setDeleteDialog(true),
+  inspectCallback: (quotation: Quotation) => {
+    router.push(`/selling/quotation/${quotation.id}`);
+  },
 
-    // openInvoiceDialog: () => setInvoiceDialog(true),
-    // openDownloadDialog: () => setDownloadDialog(true),
-    // openDuplicateDialog: () => setDuplicateDialog(true),
-    //search, filtering, sorting & paging
-    searchTerm,
-    setSearchTerm,
-    page,
-    totalPageCount: quotationsResp?.meta.pageCount || 1,
-    setPage,
-    size,
-    setSize,
-    order: sortDetails.order,
-    sortKey: sortDetails.sortKey,
-    setSortDetails: (order: boolean, sortKey: string) => setSortDetails({ order, sortKey })
-  };
+  createCallback: () => {
+    router.push('/selling/new-quotation');
+  },
 
+  updateCallback: () => {},
+
+  deleteCallback: () => {
+    setDeleteDialog(true);
+  },
+
+  additionalActions: {},
+
+  searchTerm,
+  setSearchTerm,
+  page,
+  totalPageCount: quotationsResp?.meta.pageCount || 1,
+  setPage,
+  size,
+  setSize,
+  order: sortDetails.order,
+  sortKey: sortDetails.sortKey,
+
+  setSortDetails: (order: boolean, sortKey: string) =>
+    setSortDetails({ order, sortKey }),
+
+  targetEntity: (quotation: Quotation) => {
+    quotationManager.set('id', quotation.id);
+    quotationManager.set('sequential', quotation.sequential);
+    quotationManager.set('status', quotation.status);
+  }
+};
   //Remove Quotation
   const { mutate: removeQuotation, isPending: isDeletePending } = useMutation({
     mutationFn: (id: number) => api.quotation.remove(id),
@@ -175,7 +187,7 @@ export const QuotationMain: React.FC<QuotationMainProps> = ({ className }) => {
       toast.error(message);
     }
   });
-
+const columns = useQuotationColumns(context);
   const isPending =
     isFetchPending ||
     isDeletePending ||
@@ -233,14 +245,14 @@ export const QuotationMain: React.FC<QuotationMainProps> = ({ className }) => {
         }}
         onClose={() => setInvoiceDialog(false)}
       />
-      <DataTable
-        context={context}
-        className="flex flex-col flex-1 overflow-hidden p-1"
-        containerClassName="overflow-auto"
-        data={quotations}
-        columns={getQuotationColumns(tInvoicing, router)}
-        isPending={isPending}
-      />
+     <DataTable
+  context={context}
+  className="flex flex-col flex-1 overflow-hidden p-1"
+  containerClassName="overflow-auto"
+  data={quotations}
+  columns={columns}
+  isPending={isPending}
+/>
     </>
   );
 };
